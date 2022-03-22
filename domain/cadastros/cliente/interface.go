@@ -10,4 +10,5 @@ type ICliente interface {
 	ConverterParaCliente(data interface{}) (*cliente.Cliente, error)
 	EncryptCliente(cliente *cliente.Cliente) error
 	DecryptCliente(cliente *cliente.Cliente) error
+	Buscar(cliente *cliente.Cliente) error
 }

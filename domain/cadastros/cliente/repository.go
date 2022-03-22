@@ -23,6 +23,11 @@ func (r *repositorio) Adicionar(req *cliente.Cliente) error {
 	return r.pg.Adicionar(req)
 }
 
+//Buscar busca um registro no banco
+func (r *repositorio) Buscar(req *cliente.Cliente) error{
+	return r.pg.Buscar(req)
+}
+
 //EncryptCliente realiza a criptografia dos dados necessários
 func (r *repositorio) EncryptCliente(req *cliente.Cliente) error {
 	return r.pg.EncryptCliente(req)

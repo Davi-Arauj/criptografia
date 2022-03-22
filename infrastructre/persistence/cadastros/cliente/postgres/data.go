@@ -10,8 +10,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"os"
+
+	"github.com/Masterminds/squirrel"
 )
 
 type PGCliente struct {
@@ -47,26 +48,42 @@ func (pg *PGCliente) Adicionar(req *cliente.Cliente) (err error) {
 	return
 }
 
+//Buscar busca um cliente no banco de dados do postgres
+func (pg *PGCliente) Buscar(req *cliente.Cliente) (err error) {
+	if err = pg.DB.Builder.
+		Select(`id,data_criacao::TIMESTAMPTZ,
+				   data_atualizacao::TIMESTAMPTZ,
+				   userdocument,
+				   creditcard,value`).
+		From(`t_cliente`).
+		Where(squirrel.Eq{
+			"id": req.ID,
+		}).
+		Scan(&req.ID, &req.DataCriacao, &req.DataAtualizacao, &req.Document, &req.CreditCard, &req.Value); err != nil {
+		return oops.Err(err)
+	}
+	return
+}
+
 func GenerateKeypair() (err error) {
 
 	Kp.priv, err = rsa.GenerateKey(rand.Reader, rsaKeySize)
 	if err != nil {
-		return err
+		return
 	}
 
 	Kp.pub = &Kp.priv.PublicKey
-	return nil
+	return
 }
-
-var rng = rand.Reader
-var label = []byte("davimoreiraaraujo")
 
 func (pg *PGCliente) EncryptCliente(cliente *cliente.Cliente) error {
 	GenerateKeypair()
-	var (
-		err          error
-		msgErrPadrao = "Erro ao encriptar os dados"
 
+	var (
+		err            error
+		msgErrPadrao   = "Erro ao encriptar os dados"
+		rng            = rand.Reader
+		label          = []byte("davimoreiraaraujo")
 		cipherCard     = []byte(*cliente.CreditCard)
 		cipherDocument = []byte(*cliente.Document)
 	)
@@ -94,15 +111,18 @@ func (pg *PGCliente) DecryptCliente(cliente *cliente.Cliente) error {
 
 	var (
 		msgErrPadrao = "Erro ao Desencriptar os dados"
+		rng          = rand.Reader
+		label        = []byte("davimoreiraaraujo")
 	)
 
-	cipherCard, err := (hex.DecodeString(*cliente.CreditCard))
+	cipherCard, err := hex.DecodeString(*cliente.CreditCard)
 	if err != nil {
-		log.Println(err)
+		return oops.Wrap(err, msgErrPadrao)
 	}
+
 	cipherDocument, err := hex.DecodeString(*cliente.Document)
 	if err != nil {
-		log.Println(err)
+		return oops.Wrap(err, msgErrPadrao)
 	}
 
 	plainCard, err := rsa.DecryptOAEP(sha256.New(), rng, Kp.priv, cipherCard, label)

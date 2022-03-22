@@ -24,10 +24,14 @@ func adicionar(c *gin.Context) {
 	c.JSON(http.StatusCreated, id)
 }
 
-func listar(c *gin.Context) {
-
-}
-
 func buscar(c *gin.Context) {
+	id := c.Param("cliente_id")
 
+	res, err := cliente.Buscar(c, id)
+	if err != nil {
+		oops.DefinirErro(err, c)
+		return
+	}
+
+	c.JSON(200, res)
 }
