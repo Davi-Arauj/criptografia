@@ -18,14 +18,22 @@ func novoRepo(db *database.DBTransacao) *repositorio {
 	}
 }
 
+//Adicionar adiciona um registro no banco
 func (r *repositorio) Adicionar(req *cliente.Cliente) error {
 	return r.pg.Adicionar(req)
 }
 
+//EncryptCliente realiza a criptografia dos dados necessários
 func (r *repositorio) EncryptCliente(req *cliente.Cliente) error {
 	return r.pg.EncryptCliente(req)
 }
 
+//DecryptCliente realiza a criptografia dos dados necessários
+func (r *repositorio) DecryptCliente(req *cliente.Cliente) error {
+	return r.pg.DecryptCliente(req)
+}
+
+//Converte uma struct comun em uma struct de um Cliente
 func (r *repositorio) ConverterParaCliente(dados interface{}) (*cliente.Cliente, error) {
 	res := &cliente.Cliente{}
 	if err := utils.ConvertStruct(dados, res); err != nil {

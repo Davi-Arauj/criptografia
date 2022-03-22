@@ -9,4 +9,5 @@ type ICliente interface {
 	Adicionar(req *cliente.Cliente) error
 	ConverterParaCliente(data interface{}) (*cliente.Cliente, error)
 	EncryptCliente(cliente *cliente.Cliente) error
+	DecryptCliente(cliente *cliente.Cliente) error
 }

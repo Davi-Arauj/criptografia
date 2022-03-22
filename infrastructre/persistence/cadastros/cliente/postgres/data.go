@@ -58,15 +58,17 @@ func GenerateKeypair() (err error) {
 	return nil
 }
 
+var rng = rand.Reader
+var label = []byte("davimoreiraaraujo")
+
 func (pg *PGCliente) EncryptCliente(cliente *cliente.Cliente) error {
 	GenerateKeypair()
 	var (
-		err            error
-		msgErrPadrao   = "Erro ao encriptar os dados"
-		label          = []byte("davimoreiraaraujo")
+		err          error
+		msgErrPadrao = "Erro ao encriptar os dados"
+
 		cipherCard     = []byte(*cliente.CreditCard)
 		cipherDocument = []byte(*cliente.Document)
-		rng            = rand.Reader
 	)
 
 	cipherCard, err = rsa.EncryptOAEP(sha256.New(), rng, Kp.pub, cipherCard, label)
@@ -84,9 +86,39 @@ func (pg *PGCliente) EncryptCliente(cliente *cliente.Cliente) error {
 
 	} // Como a criptografia é uma função aleatória, o texto cifrado será diferente a cada vez.
 
-	log.Println("CipherCard:-->", *cliente.CreditCard)
-	log.Println("CipherDocument:-->", *cliente.Document)
+	return nil
 
-	return err
+}
 
+func (pg *PGCliente) DecryptCliente(cliente *cliente.Cliente) error {
+
+	var (
+		msgErrPadrao = "Erro ao Desencriptar os dados"
+	)
+
+	cipherCard, err := (hex.DecodeString(*cliente.CreditCard))
+	if err != nil {
+		log.Println(err)
+	}
+	cipherDocument, err := hex.DecodeString(*cliente.Document)
+	if err != nil {
+		log.Println(err)
+	}
+
+	plainCard, err := rsa.DecryptOAEP(sha256.New(), rng, Kp.priv, cipherCard, label)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Card Error from decryption: %s\n", err)
+		return oops.Wrap(err, msgErrPadrao)
+	}
+	cliente.CreditCard = utils.PonteiroString(string(plainCard))
+
+	plainDocument, err := rsa.DecryptOAEP(sha256.New(), rng, Kp.priv, cipherDocument, label)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Document Error from decryption: %s\n", err)
+		return oops.Wrap(err, msgErrPadrao)
+	}
+
+	cliente.Document = utils.PonteiroString(string(plainDocument))
+
+	return nil
 }

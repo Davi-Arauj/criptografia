@@ -2,50 +2,25 @@ package main
 
 import (
 	"criptografia/config"
-	"criptografia/logger"
 	"criptografia/config/database"
-	"criptografia/interface/cadastros"	
+	"criptografia/interface/cadastros"
+	"criptografia/logger"
+	"criptografia/middleware"
+	"criptografia/validations"
 	"log"
 	"net/http"
 	"net/http/pprof"
-	"criptografia/middleware"
+
 	"github.com/fvbock/endless"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
-	"criptografia/validations"
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 )
 
 func main() {
-	// db.Connection()
-	// defer db.DB.Close()
-	// Davi.ID = "1"
-	// Davi.Document = "documento"
-	// Davi.CreditCard = "cartão de debito"
-
-	// rng := rand.Reader
-	// cliente.GenerateKeypair()
-	// cliente.Encrypt(Davi, rng)
-	// cliente.Decrypt(rng)
-	// cliente.Sign(rng)
-	// cliente.Verify()
-
-	// servidor := gin.New()
-
-	// apiRoutes := servidor.Group("/api")
-	// {
-	// 	apiRoutes.POST("/cliente", func(c *gin.Context) {
-	// 		err := clienteController.Save(ctx)
-	// 		if err != nil {
-	// 			ctx.json(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 		}
-	// 	})
-	// }
-	// servidor.Run(":8080")
-
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	var (
@@ -67,9 +42,6 @@ func main() {
 	defer database.FecharConexoes()
 
 	validations.ConfigurarValidadores()
-	// if err = middleware.InicializarVersionamento(); err != nil {
-	// 	zap.L().Error("Não foi possível definir a versão do sistema", zap.Error(err))
-	// }
 
 	group := errgroup.Group{}
 	group.Go(func() error {
@@ -78,8 +50,6 @@ func main() {
 	group.Go(func() error {
 		return endless.ListenAndServe(config.ObterConfiguracao().EnderecoExterno, externalRouter(logg))
 	})
-
-	// health.Init(middleware.Versao)
 
 	if err = group.Wait(); err != nil {
 		zap.L().Error("Erro ao inicializar aplicação", zap.Error(err))
@@ -93,15 +63,11 @@ func externalRouter(logg *zap.Logger) http.Handler {
 		middleware.VersaoInfo(),
 		middleware.GinZap(logg),
 		ginzap.RecoveryWithZap(logg, true),
-		// middleware.Autenticacao(),
 	)
 	v2 := r.Group("v2")
 	internal := v2.Group("internal")
-	// internal.Use(middleware.ModoAdministrador())
 	pprofRouter(internal)
 	cadastros.Router(v2.Group("cadastros"))
-
-	//middleware.AutoPerm(r.Routes())
 
 	return r
 }

@@ -5,7 +5,6 @@ import (
 	"criptografia/config/database"
 	"criptografia/domain/cadastros/cliente"
 	"criptografia/oops"
-	"log"
 )
 
 func Adicionar(ctx context.Context, req *Req) (id *string, err error) {
@@ -28,15 +27,13 @@ func Adicionar(ctx context.Context, req *Req) (id *string, err error) {
 	dados.CreditCard = req.CreditCard
 	dados.Document = req.Document
 	dados.Value = req.Value
-	log.Println(dados)
+
 	if err = repoCliente.EncryptCliente(dados); err != nil {
 		return id, oops.Wrap(err, msgErrPadrao)
 	}
-	log.Println(dados)
 	if err = repoCliente.Adicionar(dados); err != nil {
 		return id, oops.Wrap(err, msgErrPadrao)
 	}
-
 	if err = tx.Commit(); err != nil {
 		return id, oops.Wrap(err, msgErrPadrao)
 	}
